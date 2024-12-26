@@ -1,0 +1,210 @@
+<!-- Styles for Top-Bottom Variant -->
+<style>
+  .top-bottom-variant label {
+      border: var(--variant-pills-border-width) solid rgba(var(--color-foreground), var(--variant-pills-border-opacity));
+      background-color: rgb(var(--color-background));
+      color: rgb(var(--color-foreground));
+      border-radius: var(--variant-pills-radius);
+      display: inline-block;
+      margin: 0.7rem 0.5rem 0.2rem 0;
+      padding: 1rem 2rem;
+      font-size: 1.4rem;
+      letter-spacing: 0.1rem;
+      line-height: 1;
+      text-align: center;
+      transition: border var(--duration-short) ease;
+      cursor: pointer;
+      position: relative;
+  }
+  .top-bottom-variant input[type="radio"] {
+      clip: rect(0, 0, 0, 0);
+      overflow: hidden;
+      position: absolute;
+      height: 1px;
+      width: 1px;
+  }
+  .top-bottom-variant input[type="radio"]:checked + label {
+      background-color: rgb(var(--color-foreground));
+      color: rgb(var(--color-background));
+  }
+  .top-bottom-variant button#add-to-cart-btn {
+      margin-top: 25px;
+      display: flex;
+      width: 100%;
+      background: #ffffff;
+      color: #000;
+  }
+  label.out-of-stock {
+    text-decoration: line-through;
+}
+</style>
+
+<!-- Liquid for Top and Bottom Products -->
+{% assign top_products = product.metafields.custombottom.top_product.value %}
+{% assign bottom_products = product.metafields.custombottom.bottom_product.value %}
+
+<!-- Default Handling for Null Values -->
+{% if top_products and bottom_products %}
+  <span
+    id="total-price"
+    data-top-price="{{ top_products.variants[0].price }}"
+    data-bottom-price="{{ bottom_products.variants[0].price }}"
+    data-total-price="{{ top_products.variants[0].price | plus: bottom_products.variants[0].price }}"
+  >
+    Total: {{ top_products.variants[0].price | divided_by: 100 | round: 2 }}
+  </span>
+{% endif %}
+
+<div class="top-bottom-variant">
+  <!-- Top Product -->
+  {% if top_products %}
+    <div id="top-product">
+      <h3>{{ top_products.title }}</h3>
+      Top:
+      <span id="top-price">{{ top_products.variants[0].price | divided_by: 100 | round: 2 }}</span><br>
+      {% assign first_top_variant = true %}
+      {% for variant in top_products.variants %}
+        {% if variant.available %}
+          <input
+            class="top-variant"
+            type="radio"
+            id="top-variant-{{ variant.id }}"
+            data-price="{{ variant.price }}"
+            name="top-variant"
+            value="{{ variant.id }}"
+            {% if first_top_variant %}
+              checked{% assign first_top_variant = false %}
+            {% endif %}
+          >
+          <label for="top-variant-{{ variant.id }}">{{ variant.title }}</label>
+        {% else %}
+        <label class="out-of-stock" for="top-variant-{{ variant.id }}">{{ variant.title }}</label>
+          {% comment %} <p class="out-of-stock">{{ variant.title }} - Out of Stock</p> {% endcomment %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+  
+
+  <!-- Bottom Product -->
+  {% if bottom_products %}
+    <div id="bottom-product">
+      <h3>{{ bottom_products.title }}</h3>
+      Bottom:
+      <span id="bottom-price">{{ bottom_products.variants[0].price | divided_by: 100 | round: 2 }}</span><br>
+      {% assign first_bottom_variant = true %}
+      {% for variant in bottom_products.variants %}
+        {% if variant.available %}
+        <input
+          class="bottom-variant"
+          type="radio"
+          id="bottom-variant-{{ variant.id }}"
+          data-price="{{ variant.price }}"
+          name="bottom-variant"
+          value="{{ variant.id }}"
+          {% if first_bottom_variant %}
+            checked{% assign first_bottom_variant = false %}
+          {% endif %}
+        >
+        <label for="bottom-variant-{{ variant.id }}">{{ variant.title }}</label>
+        {%  else %}
+        <label class="out-of-stock" for="bottom-variant-{{ variant.id }}">{{ variant.title }}</label>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Submit Button -->
+  <div id="cart-message" style="color: red; display: none; margin-bottom: 10px;"></div>
+  <button type="button" id="add-to-cart-btn" class="button btn">Add to Cart</button>
+</div>
+
+<script>
+  $(document).ready(function () {
+    var currencySymbol = window.Shopify && Shopify.currency ? Shopify.currency.active : "{{ shop.currency }}";
+
+    function updateTotalPrice() {
+      var topPrice = parseFloat($("input[name='top-variant']:checked").data("price")) / 100 || 0;
+      var bottomPrice = parseFloat($("input[name='bottom-variant']:checked").data("price")) / 100 || 0;
+
+      var totalPrice = topPrice + bottomPrice;
+
+      $("#top-price").text(currencySymbol + " " + topPrice.toFixed(2));
+      $("#bottom-price").text(currencySymbol + " " + bottomPrice.toFixed(2));
+      $("#total-price").text("Total: " + currencySymbol + " " + totalPrice.toFixed(2));
+    }
+
+    $("input[type='radio']").click(function () {
+      if ($(this).data("waschecked") === true) {
+        $(this).prop("checked", false).data("waschecked", false);
+      } else {
+        $("input[name='" + $(this).attr("name") + "']").data("waschecked", false);
+        $(this).data("waschecked", true);
+      }
+      $("#cart-message").hide();
+      updateTotalPrice();
+    });
+
+    $("#add-to-cart-btn").click(function () {
+      var topVariantId = $("input[name='top-variant']:checked").val();
+      var bottomVariantId = $("input[name='bottom-variant']:checked").val();
+
+      $("#cart-message").hide().text("");
+
+      if (!topVariantId && !bottomVariantId) {
+        $("#cart-message").text("Please select at least one product variant.").show();
+        return;
+      }
+
+      var items = [];
+      if (topVariantId) items.push({ id: topVariantId, quantity: 1 });
+      if (bottomVariantId) items.push({ id: bottomVariantId, quantity: 1 });
+
+      $.ajax({
+        url: "/cart/add.js",
+        type: "POST",
+        dataType: "json",
+        data: { items: items },
+        success: function () {
+          openCartDrawer();
+          updateCartContent();
+        },
+        error: function () {
+          $("#cart-message").text("Failed to add products to cart. Please try again.").css("color", "red").show();
+        }
+      });
+    });
+
+    function openCartDrawer() {
+      if ($(".cart-drawer").length) {
+        $(".cart-drawer").addClass("open");
+      } else {
+        $("body").addClass("cart-drawer-open");
+      }
+    }
+
+    function updateCartContent() {
+      $.getJSON("/cart.js", function (cart) {
+        $(".cart-drawer .cart-total").text(currencySymbol + " " + (cart.total_price / 100).toFixed(2));
+        $("#cart-icon-bubble .cart-count-bubble").remove();
+        $("#cart-icon-bubble .visually-hidden").after('<div class="cart-count-bubble">' + cart.item_count + '</div>');
+        $("cart-drawer").load(window.location.href + " #CartDrawer").removeClass("is-empty").addClass("active");
+      });
+    }
+
+    updateTotalPrice();
+  });
+</script>
+
+<!-------------------------------------------------------------------------------------------------  -->
+{% schema %}
+{
+  "name": "Top Bottom Product",
+  "target": "section",
+  "settings": [
+    // { "type": "product", "id": "product", "label": "product", "autofill": true },
+    { "type": "color", "id": "colour", "label": "Star Colour", "default": "#ff0000" }
+  ]
+}
+{% endschema %}
+
