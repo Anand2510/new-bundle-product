@@ -1,0 +1,55 @@
+.search-bar {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .search-bar input {
+    width: 50%;
+    padding: 8px;
+    font-size: 16px;
+  }
+
+  .product-card-img {
+    flex: 0 25%;  
+    text-align: center; 
+    padding: 10px;
+  }
+
+  .product-body-content {
+    flex: 0 70%;
+  }
+
+  li#pro {
+    width: 50%;
+    list-style-type: none;
+    margin: 15px;
+    background-color: #f8f8ff;
+  }
+
+  .product-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    align-items: center;
+  }
+
+  .pagination span {
+    margin: 0 5px;
+    cursor: pointer;
+  }
+
+  .pagination__disable {
+    pointer-events: none;
+    color: #ccc;
+  }
+
+  .pagination__selected {
+    font-weight: bold;
+    color: blue;
+  }
