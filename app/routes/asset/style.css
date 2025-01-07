@@ -10,7 +10,7 @@
     align-items: center;
     /* justify-content: center; */
     gap: 10px;
-    border: 1px solid;
+    border: 1px solid #ef295a;
     width: 50%;
     text-align: center;
         /* // margin: auto; */
@@ -19,7 +19,7 @@
     align-items: center;
     /* justify-content: center; */
     gap: 10px;
-    border: 1px solid;
+    border: 1px solid #ef295a;
     width: 50%;
     text-align: center;
         /* // margin: auto; */
@@ -241,7 +241,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    border: 1px solid;
+    border: 5px solid #03fe64;
     /* width: 50%; */
     /* margin: auto; */
     padding: 15px;
@@ -271,7 +271,7 @@ button {/* background: red; */padding: 10px;border: 1px solid;border-radius: 10p
 
 .select-top-product {
     justify-content: space-between;
-        border: 2px solid #000000b8;
+        border: 5px solid #ef295a;
     border-radius: 14px;
         margin-bottom: 15px;
         
